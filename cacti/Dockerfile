@@ -4,18 +4,28 @@ MAINTAINER in_dow <in_dow [at] hotmail.com>
 
 ################### SETUP PACKAGES  ########################
 # Install recommend packages
-RUN apk add -U --no-cache mysql-client net-snmp \
-    rrdtool libzip \
+RUN apk add -U --no-cache mysql-client gd \
+    openldap libressl libzip freetype libpng libjpeg-turbo \
+    rrdtool net-snmp net-snmp-tools gettext gmp \
     h2o supervisor sudo
 # Setup additional packages
 RUN set -ex \
+    && mv /usr/local/bin/docker-php-ext-install /usr/local/bin/docker-php-ext-install.org \
+    && cat /usr/local/bin/docker-php-ext-install.org \
+       |  sed -re 's#(make -j"\$j")#\1 -s#' \
+       > /usr/local/bin/docker-php-ext-install \
+    && chmod +x /usr/local/bin/docker-php-ext-install \
     && apk add -U --no-cache --virtual .php-buildapps gcc make perl autoconf file g++ \
-        dpkg-dev dpkg re2c patch libc-dev net-snmp-dev \
+        openldap-dev libressl-dev libzip-dev libxml2-dev freetype-dev libpng-dev libjpeg-turbo-dev \
+        dpkg-dev dpkg re2c patch libc-dev musl-dev net-snmp-dev gettext-dev gmp-dev \
     && docker-php-ext-install -j$(nproc) mysqli pdo_mysql \
-    && docker-php-ext-install -j$(nproc) snmp opcache \
-    && pecl install apcu \
-    && pecl clear-cache \
+    && docker-php-ext-install -j$(nproc) gettext gmp sockets snmp \
+    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) gd \
+    && docker-php-ext-configure ldap \
+    && docker-php-ext-install -j$(nproc) ldap \
     && apk del --purge .php-buildapps \
+    && mv /usr/local/bin/docker-php-ext-install.org /usr/local/bin/docker-php-ext-install \
     && mkdir -p /var/www/html/cacti /usr/local/spine/bin/
 
 
@@ -62,7 +72,7 @@ RUN set -ex \
     && make -j$(nproc) -s \
     && make install \
     && cd .. \
-    && rm -rf /tmp/spine.tar.gz spine \
+    && rm -rf /tmp/spine.tar.gz ./spine /usr/local/spine/share/man \
     && apk del --purge .spine-buildapps
 
 
@@ -76,10 +86,7 @@ COPY supervisord.conf \
      entrypoint.sh \
      /tmp/
 RUN set -ex \
-      && echo "*/5    *       *       *       *       php /var/www/html/glpi/front/cron.php >& /dev/null" > crond.txt \
-      && echo "*/5    *       *       *       *       /var/www/html/glpi/bin/console glpi:ldap:synchronize_users  | grep -v 'No active LDAP server found.'" >> crond.txt \
-      && echo "*/5    *       *       *       *       /var/www/html/glpi/plugins/ocsinventoryng/scripts/ocsng_fullsync.sh --thread_nbr=2 " >> crond.txt \
-      && echo "*/5    *       *       *       *       /var/www/html/glpi/plugins/ocsinventoryng/scripts/ocsng_snmpfullsync.sh --thread_nbr=2 " >> crond.txt \
+      && echo "*/5    *       *       *       *      /usr/bin/php /usr/share/cacti/poller.php > /dev/null 2>&1" > crond.txt \
       && cat crond.txt | crontab -u www-data - && rm crond.txt \
       && mv /tmp/supervisord.conf /tmp/h2o.conf /etc/ \
       && chmod 644 /etc/supervisord.conf /etc/h2o.conf \

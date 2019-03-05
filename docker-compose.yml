@@ -9,13 +9,17 @@ services:
       - DB_DATABASE=cacti
       - DB_USERNAME=cacti
       - DB_PASSWORD=cactipass
+      - TZ=Asia/Tokyo
     links:
       - cactidb:cactidb
+    depends_on:
+      - cactidb
   cactidb:
     # cacti only supports 5.x
     image: mysql:5
     environment:
       - MYSQL_ROOT_PASSWORD=rootpass
+      - TZ=Asia/Tokyo
     command: --sql_mode=""
     volumes:
        - ./mysql.init:/docker-entrypoint-initdb.d:ro
