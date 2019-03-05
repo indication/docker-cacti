@@ -23,4 +23,5 @@ services:
     command: --sql_mode=""
     volumes:
        - ./mysql.init:/docker-entrypoint-initdb.d:ro
+       - ./mysql.conf:/etc/mysql/mysql.conf.d:ro
 
