@@ -4,9 +4,11 @@ MAINTAINER in_dow <in_dow [at] hotmail.com>
 
 ################### SETUP PACKAGES  ########################
 # Install recommend packages
+# coreutils for who command
+# rrdtool net-snmp net-snmp-tools gettext gmp is for cacti
 RUN apk add -U --no-cache mysql-client gd \
     openldap libressl libzip freetype libpng libjpeg-turbo \
-    rrdtool net-snmp net-snmp-tools gettext gmp \
+    rrdtool net-snmp net-snmp-tools gettext gmp coreutils \
     h2o supervisor sudo
 # Setup additional packages
 RUN set -ex \
@@ -86,7 +88,7 @@ COPY supervisord.conf \
      entrypoint.sh \
      /tmp/
 RUN set -ex \
-      && echo "*/5    *       *       *       *      /usr/bin/php /usr/share/cacti/poller.php > /dev/null 2>&1" > crond.txt \
+      && echo "*/5    *       *       *       *      php /var/www/html/cacti/poller.php > /dev/null 2>&1" > crond.txt \
       && cat crond.txt | crontab -u www-data - && rm crond.txt \
       && mv /tmp/supervisord.conf /tmp/h2o.conf /etc/ \
       && chmod 644 /etc/supervisord.conf /etc/h2o.conf \
