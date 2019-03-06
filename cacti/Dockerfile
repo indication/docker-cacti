@@ -6,9 +6,10 @@ MAINTAINER in_dow <in_dow [at] hotmail.com>
 # Install recommend packages
 # coreutils for who command
 # rrdtool net-snmp net-snmp-tools gettext gmp is for cacti
+# mariadb-connector-c is for spine cacti
 RUN apk add -U --no-cache mysql-client gd \
     openldap libressl libzip freetype libpng libjpeg-turbo \
-    rrdtool net-snmp net-snmp-tools gettext gmp coreutils \
+    rrdtool net-snmp net-snmp-tools gettext gmp coreutils mariadb-connector-c \
     h2o supervisor sudo
 # Setup additional packages
 RUN set -ex \
@@ -30,9 +31,6 @@ RUN set -ex \
     && mv /usr/local/bin/docker-php-ext-install.org /usr/local/bin/docker-php-ext-install \
     && mkdir -p /var/www/html/cacti /usr/local/spine/bin/
 
-
-###################### DATA VOLUME  ########################
-VOLUME ["/var/lib/glpi"]
 
 ############ INITIAL APPLICATION SETUP #####################
 # DO NOT change the order of following commands
@@ -73,9 +71,14 @@ RUN set -ex \
     && ./configure \
     && make -j$(nproc) -s \
     && make install \
+    && chown root:root /usr/local/spine/bin/spine \
+    && chmod +s /usr/local/spine/bin/spine \
     && cd .. \
     && rm -rf /tmp/spine.tar.gz ./spine /usr/local/spine/share/man \
     && apk del --purge .spine-buildapps
+
+###################### DATA VOLUME  ########################
+VOLUME ["/var/www/html/cacti/rra", "/var/www/html/cacti/log"]
 
 
 ####################### SERVER SETUP #######################
