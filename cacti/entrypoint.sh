@@ -30,6 +30,21 @@ if [ $? -gt 0 ]; then
   echo Setup data
   $MYSQLCMDBASE < /var/www/html/cacti/cacti.sql
 fi
+SPINE_CONF=/etc/spine.conf
+if [ ! -f "$SPINE_CONF" ]; then
+  echo Create spine config
+  echo "# spine config" > $SPINE_CONF
+  echo "DB_Host       ${DB_HOST}" >> $SPINE_CONF
+  echo "DB_Database   ${DB_DATABASE}" >> $SPINE_CONF
+  echo "DB_User       ${DB_USERNAME}" >> $SPINE_CONF
+  echo "DB_Pass       ${DB_PASSWORD}" >> $SPINE_CONF
+  echo "DB_Port       ${DB_PORT:-3306}" >> $SPINE_CONF
+  echo "RDB_Host      ${DB_HOST}" >> $SPINE_CONF
+  echo "RDB_Database  ${DB_DATABASE}" >> $SPINE_CONF
+  echo "RDB_User      ${DB_USERNAME}" >> $SPINE_CONF
+  echo "RDB_Pass      ${DB_PASSWORD}" >> $SPINE_CONF
+  echo "RDB_Port      ${DB_PORT:-3306}" >> $SPINE_CONF
+fi
 
 
 exec $@
