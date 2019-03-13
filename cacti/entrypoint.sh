@@ -17,9 +17,9 @@ do
   if [ $? -eq 0 ]; then
     break
   fi
-  if [ $i -eq 10 ]; then
+  if [ $i -eq 20 ]; then
     echo "Failed to access ${DB_HOST}:${DB_PORT:-3306}"
-    exit 1
+    exit 3
   fi
   sleep 1
 done
