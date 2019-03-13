@@ -6,10 +6,9 @@ MAINTAINER in_dow <in_dow [at] hotmail.com>
 # Install recommend packages
 # coreutils for who command
 # rrdtool net-snmp net-snmp-tools gettext gmp is for cacti
-# mariadb-connector-c is for spine cacti
 RUN apk add -U --no-cache mysql-client gd \
     openldap libressl libzip freetype libpng libjpeg-turbo \
-    rrdtool net-snmp net-snmp-tools gettext gmp coreutils mariadb-connector-c \
+    rrdtool net-snmp net-snmp-tools gettext gmp coreutils \
     h2o supervisor sudo
 # Setup additional packages
 RUN set -ex \
@@ -29,17 +28,16 @@ RUN set -ex \
     && docker-php-ext-install -j$(nproc) ldap \
     && apk del --purge .php-buildapps \
     && mv /usr/local/bin/docker-php-ext-install.org /usr/local/bin/docker-php-ext-install \
-    && mkdir -p /var/www/html/cacti /usr/local/spine/bin/
+    && mkdir -p /var/www/html/cacti
 
 
 ############ INITIAL APPLICATION SETUP #####################
 # DO NOT change the order of following commands
 WORKDIR /var/www/html/cacti
-RUN chown -R www-data:www-data /var/www/html /usr/local/spine/bin
+RUN chown -R www-data:www-data /var/www/html
 USER www-data
 ENV CACTI_VERSION 1.2.2
 ENV CACTI_MD5SUM 67763be07bfeaf142f771fe306eaba5c
-ENV SPINE_MD5SUM 6c84af65180f45d6d2cbe74b41f07c74
 # Clone and dependencies
 # Copy all configuration files and add alias(ln) to /cacti
 RUN set -ex \
@@ -58,24 +56,6 @@ RUN set -ex \
     && rm /tmp/cacti.tar.gz
     
 USER root
-# setup plugins
-RUN set -ex \
-    && apk add -U --no-cache --virtual .spine-buildapps gcc make automake dos2unix autoconf gzip file m4 \
-        patch libc-dev net-snmp-dev libtool mariadb-dev help2man \
-    && curl -o /tmp/spine.tar.gz -sSL https://github.com/Cacti/spine/archive/release/$CACTI_VERSION.tar.gz \
-    && (echo "$SPINE_MD5SUM */tmp/spine.tar.gz" | md5sum -c || (md5sum /tmp/spine.tar.gz && exit 1)) \
-    && mkdir -p spine \
-    && cd spine \
-    && tar -xzf /tmp/spine.tar.gz --strip-components=1 \
-    && ./bootstrap \
-    && ./configure \
-    && make -j$(nproc) -s \
-    && make install \
-    && chown root:root /usr/local/spine/bin/spine \
-    && chmod +s /usr/local/spine/bin/spine \
-    && cd .. \
-    && rm -rf /tmp/spine.tar.gz ./spine /usr/local/spine/share/man \
-    && apk del --purge .spine-buildapps
 
 ###################### DATA VOLUME  ########################
 VOLUME ["/var/www/html/cacti/rra", "/var/www/html/cacti/log"]
