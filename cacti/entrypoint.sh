@@ -29,6 +29,16 @@ $MYSQLCMDBASE -w --connect-timeout=1000 -e "SELECT * FROM version WHERE 1=0;"
 if [ $? -gt 0 ]; then
   echo Setup data
   $MYSQLCMDBASE < /var/www/html/cacti/cacti.sql
+  echo Run cli installer...
+  php cli/install_cacti.php --install --accept-eula \
+    --cron=300 \
+    --mode=1 \
+    --template=Cisco_Router.xml.gz:1 \
+    --template=Generic_SNMP_Device.xml.gz:1 \
+    --template=Local_Linux_Machine.xml.gz:1 \
+    --template=NetSNMP_Device.xml.gz:1 \
+    --template=Windows_Device.xml.gz:1
+  
 fi
 
 
